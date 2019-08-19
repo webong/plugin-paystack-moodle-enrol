@@ -1,6 +1,6 @@
 # Paystack Enrolment Plugin #
 
-Enrolment in Moodle using Stripe payment gateway for paid courses
+Enrolment in Moodle using the Paystack gateway for paid courses
 
 This plugin helps admins and webmasters use Paystack as the payment gateway. This plugin has all the settings for development as well as for production usage. Its easy to install, set up and effective.
 
