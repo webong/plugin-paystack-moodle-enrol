@@ -451,7 +451,7 @@ class enrol_paystack_plugin extends enrol_plugin
         $pool = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
         $max   = strlen($pool);
         for ($i = 0; $i < $length; $i++) {
-            $token .= static::getPool()[static::secureCrypt(0, $max)];
+            $token .= $pool[static::secureCrypt(0, $max)];
         }
         return $token;
     }
