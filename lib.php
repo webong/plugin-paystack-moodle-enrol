@@ -133,4 +133,19 @@ class enrol_paystack_plugin extends enrol_plugin {
     public function can_add_instance($courseid) {
         return true;
     }
+
+    /**
+     * Lists all currencies available for plugin.
+     *
+     * @return $currencies.
+     */
+    public function get_currencies()
+    {
+        $codes = array('NGN', 'USD');
+        $currencies = array();
+        foreach ($codes as $c) {
+            $currencies[$c] = new lang_string($c, 'core_currencies');
+        }
+        return $currencies;
+    }
 }
