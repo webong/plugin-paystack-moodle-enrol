@@ -101,7 +101,7 @@ if ($ADMIN->fulltree) {
     $currencies = enrol_get_plugin('paystack')->get_currencies();
     $settings->add(new admin_setting_configselect(
         'enrol_paystack/currency',
-        get_string('set_currency', 'enrol_paystack'),
+        get_string('currency', 'enrol_paystack'),
         '',
         'NGN',
         $currencies
