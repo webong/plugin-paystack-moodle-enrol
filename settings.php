@@ -26,6 +26,22 @@
 defined('MOODLE_INTERNAL') || die();
 
 if ($ADMIN->fulltree) {
-   // TODO: Define the plugin settings page.
-   // https://docs.moodle.org/dev/Admin_settings
+    // TODO: Define the plugin settings page.
+    // https://docs.moodle.org/dev/Admin_settings
+
+    $settings->add(new admin_setting_heading('enrol_paystack_enrolname_short', '', get_string('pluginname_desc', 'enrol_paystack')));
+    $settings->add(new admin_setting_configtext(
+        'enrol_paystack/secretkey',
+        get_string('secretkey', 'enrol_paystack'),
+        get_string('secretkey_desc', 'enrol_paystack'),
+        '',
+        PARAM_TEXT
+    ));
+    $settings->add(new admin_setting_configtext(
+        'enrol_paystack/publickey',
+        get_string('publickey', 'enrol_paystack'),
+        get_string('public_desc', 'enrol_paystack'),
+        '',
+        PARAM_TEXT
+    ));
 }
