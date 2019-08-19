@@ -15,20 +15,15 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Code to be executed after the plugin's database scheme has been installed is defined here.
+ * Defines message providers (types of message sent) for the Paystack enrolment plugin.
  *
- * @package     enrol_paystack
- * @category    upgrade
- * @copyright   2019 Paystack
- * @license     http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @package    enrol_paystack
+ * @copyright  2019 Paystack
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 defined('MOODLE_INTERNAL') || die();
 
-/**
- * Custom code to be run on installing the plugin.
- */
-function xmldb_enrol_paystack_install() {
-
-    return true;
-}
+$messageproviders = array(
+    'paystack_enrolment' => array(),
+);
