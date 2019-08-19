@@ -43,7 +43,7 @@ if ($ADMIN->fulltree) {
     $settings->add(new admin_setting_configtext(
         'enrol_paystack/publickey',
         get_string('publickey', 'enrol_paystack'),
-        get_string('public_desc', 'enrol_paystack'),
+        get_string('publickey_desc', 'enrol_paystack'),
         '',
         PARAM_TEXT
     ));
