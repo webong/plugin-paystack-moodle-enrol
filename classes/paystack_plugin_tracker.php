@@ -35,16 +35,16 @@ class paystack_plugin_tracker {
     function log_transaction_success($trx_ref){
         //send reference to logger along with plugin name and public key
         $url = "https://plugin-tracker.paystackintegrations.com/log/charge_success";
-        $fields = [
+        $params = [
             'plugin_name'  => $this->plugin_name,
             'transaction_reference' => $trx_ref,
             'public_key' => $this->public_key
         ];
-        $fields_string = http_build_query($fields);
+        $params_string = http_build_query($params);
         $ch = curl_init();
         curl_setopt($ch,CURLOPT_URL, $url);
         curl_setopt($ch,CURLOPT_POST, true);
-        curl_setopt($ch,CURLOPT_POSTFIELDS, $fields_string);
+        curl_setopt($ch,CURLOPT_POSTFIELDS, $params_string);
         curl_setopt($ch,CURLOPT_RETURNTRANSFER, true); 
         //execute post
         $result = curl_exec($ch);
