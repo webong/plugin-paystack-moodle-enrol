@@ -122,8 +122,9 @@ if ((float) $plugininstance->cost <= 0) {
 $cost = format_float($cost, 2, false);
 
 $curl = curl_init();
+$paystackaddr = "https://api.paystack.co/transaction/verify/" . $data->paystack - reference;
 curl_setopt_array($curl, [
-    CURLOPT_URL => "https://api.paystack.co/transaction/verify/" . $data->reference,
+    CURLOPT_URL => $paystackaddr,
     CURLOPT_RETURNTRANSFER => true,
     CURLOPT_CUSTOMREQUEST => "POST",
     CURLOPT_HTTPHEADER => [
@@ -140,7 +141,7 @@ if (curl_errno($curl)) {
         'errpaystackconnect',
         'enrol_paystack',
         '',
-        array('url' => $paystackaddr, 'response' => $res),
+        ['url' => $paystackaddr, 'response' => $res],
         json_encode($data)
     );
 }
