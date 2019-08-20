@@ -10,7 +10,6 @@
 // GNU General Public License for more details.
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
-
 /**
  * Listens for Instant Payment Notification from Paystack
  *
@@ -23,7 +22,6 @@
  * @copyright  2019 Paystack
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-
 // Disable moodle specific debug messages and any errors in output,
 // comment out when debugging or better look into error log!
 define('NO_DEBUG_DISPLAY', true);
@@ -36,16 +34,24 @@ if ($CFG->version < 2018101900) {
 require_once($CFG->libdir . '/enrollib.php');
 require_once($CFG->libdir . '/filelib.php');
 
-
 require_login();
 // Paystack does not like when we return error messages here,
 // the custom handler just logs exceptions and stops.
 set_exception_handler('enrol_paystack_charge_exception_handler');
 
+// Make sure we are enabled in the first place.
+if (!enrol_is_enabled('paystack')) {
+    http_response_code(503);
+    throw new moodle_exception('errdisabled', 'enrol_paystack');
+}
+
 // Keep out casual intruders.
 if (empty($_POST) or !empty($_GET)) {
     http_response_code(400);
     throw new moodle_exception('invalidrequest', 'core_error');
+}
+if (empty(required_param('paystack-trxref', PARAM_RAW))) {
+    print_error(get_string('paystack_sorry', 'enrol_paystack'));
 }
 
 $data = new stdClass();
@@ -57,21 +63,16 @@ foreach ($_POST as $key => $value) {
     if (is_array($value)) {
         throw new moodle_exception('invalidrequest', 'core_error', '', null, 'Unexpected array param: ' . $key);
     }
-    $req .= "&$key=" . urlencode($value);
     $data->$key = fix_utf8($value);
 }
-
 if (empty($data->custom)) {
     throw new moodle_exception('invalidrequest', 'core_error', '', null, 'Missing request param: custom');
 }
-
 $custom = explode('-', $data->custom);
 unset($data->custom);
-
 if (empty($custom) || count($custom) < 3) {
     throw new moodle_exception('invalidrequest', 'core_error', '', null, 'Invalid value of the request param: custom');
 }
-
 $data->userid           = (int) $custom[0];
 $data->courseid         = (int) $custom[1];
 $data->instanceid       = (int) $custom[2];
@@ -80,53 +81,27 @@ $data->payment_currency = $data->currency_code;
 $data->timeupdated      = time();
 
 // Get the user and course records.
-if (!$user = $DB->get_record("user", array("id" => $data->userid))) {
-    message_paystack_error_to_admin("Not a valid user id", $data);
-    redirect($CFG->wwwroot);
-}
-
-if (!$course = $DB->get_record("course", array("id" => $data->courseid))) {
-    message_paystack_error_to_admin("Not a valid course id", $data);
-    redirect($CFG->wwwroot);
-}
-
-if (!$context = context_course::instance($course->id, IGNORE_MISSING)) {
-    message_paystack_error_to_admin("Not a valid context id", $data);
-    redirect($CFG->wwwroot);
-}
+$user = $DB->get_record("user", array("id" => $data->userid), "*", MUST_EXIST);
+$course = $DB->get_record("course", array("id" => $data->courseid), "*", MUST_EXIST);
+$context = context_course::instance($course->id, MUST_EXIST);
 
 $PAGE->set_context($context);
 
-if (!$plugininstance = $DB->get_record("enrol", array("id" => $data->instanceid, "status" => 0))) {
-    message_paystack_error_to_admin("Not a valid instance id", $data);
-    redirect($CFG->wwwroot);
-}
+// Use the queried course's full name for the item_name field.
+$data->item_name = $course->fullname;
 
-// If currency is incorrectly set then someone maybe trying to cheat the system.
-
-if ($data->courseid != $plugininstance->courseid) {
-    message_paystack_error_to_admin("Course Id does not match to the course settings, received: " . $data->courseid, $data);
-    redirect($CFG->wwwroot);
-}
-
+$plugin_instance = $DB->get_record("enrol", array("id" => $data->instanceid, "enrol" => "paystack", "status" => 0), "*", MUST_EXIST);
 $plugin = enrol_get_plugin('paystack');
 
-// Check that amount paid is the correct amount.
-if ((float) $plugininstance->cost <= 0) {
-    $cost = (float) $plugin->get_config('cost');
-} else {
-    $cost = (float) $plugininstance->cost;
-}
-
-// Use the same rounding of floats as on the enrol form.
-$cost = format_float($cost, 2, false);
+// Set Course and Paystack Url
+$courseUrl = "$CFG->wwwroot/course/view.php?id=$course->id";
+$paystackUrl = "https://api.paystack.co/transaction/verify/" . $data->reference;
 
 $curl = curl_init();
-$paystackaddr = "https://api.paystack.co/transaction/verify/" . $data->reference;
 curl_setopt_array($curl, [
-    CURLOPT_URL => $paystackaddr,
+    CURLOPT_URL => $url,
     CURLOPT_RETURNTRANSFER => true,
-    CURLOPT_CUSTOMREQUEST => "POST",
+    CURLOPT_CUSTOMREQUEST => "GET",
     CURLOPT_HTTPHEADER => [
         "authorization: Bearer " . $plugin->get_config('secretkey'), //replace this with your own test key
         "content-type: application/json",
@@ -134,171 +109,166 @@ curl_setopt_array($curl, [
     ],
 ]);
 
-$request = curl_exec($curl);
+$res = curl_exec($curl);
+$code = curl_getinfo($curl, CURLINFO_HTTP_CODE);
 
 if (curl_errno($curl)) {
     throw new moodle_exception(
         'errpaystackconnect',
         'enrol_paystack',
         '',
-        ['url' => $paystackaddr, 'response' => $res],
+        array('url' => $paystackUrl, 'response' => $res),
         json_encode($data)
     );
 }
 
-if($request){
-    $res = json_decode($request, true);
-}
-
-var_dump($res);
-die;
-
-// Send the file, this line will be reached if no error was thrown above.
-$data->txn_id = $res->data->reference;
-$data->tax = $res->data->amount / 100;
-$data->memo = $res->message;
-$data->payment_status = $res->data->status;
-$data->pending_reason = $res->data->gateway_response;
-$data->reason_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-
 curl_close($curl);
-// ALL CLEAR !
 
-// check the payment_status and payment_reason
+if ($res->status) {
+    // Send the file, this line will be reached if no error was thrown above.
+    $data->tax = $res->data->amount / 100;
+    $data->memo = $res->data->gateway_response;
+    $data->payment_status = $res->data->status;
+    $data->reason_code = $code;
 
-// If status is not completed then unenrol the student if already enrolled
-// and notify admin
+    // If currency is incorrectly set then someone maybe trying to cheat the system
+    if ($data->currency_code != $plugin_instance->currency) {
+        $message = "Currency does not match course settings, received: " . $data->currency_code;
+        message_paystack_error_to_admin(
+            $message,
+            $data
+        );
+        notice($message, $courseUrl);
+    }
 
-if ($data->payment_status != "success") {
-    message_paystack_error_to_admin(
-        "Status not successful or pending. User unenrolled from course",
-        $data
-    );
-    die;
-}
+    // Check that amount paid is the correct amount
+    if ((float) $plugin_instance->cost <= 0) {
+        $cost = (float) $plugin->get_config('cost');
+    } else {
+        $cost = (float) $plugin_instance->cost;
+    }
 
-// If currency is incorrectly set then someone maybe trying to cheat the system
-if ($data->currency_code != $plugin_instance->currency) {
-    message_paystack_error_to_admin(
-        "Currency does not match course settings, received: " . $data->mc_currency,
-        $data
-    );
-    die;
-}
+    // Use the same rounding of floats as on the enrol form.
+    $cost = format_float($cost, 2, false);
 
-$DB->insert_record("enrol_paystack", $data);
+    // If cost is greater than payment_gross, then someone maybe trying to cheat the system
+    if ($data->payment_gross < $cost) {
+        $message = "Amount paid is not enough ($data->payment_gross < $cost))";
+        message_paystack_error_to_admin(
+            $message,
+            $data
+        );
+        notice($message, $courseUrl);
+    }
 
-if ($plugininstance->enrolperiod) {
-    $timestart = time();
-    $timeend   = $timestart + $plugininstance->enrolperiod;
-} else {
-    $timestart = 0;
-    $timeend   = 0;
-}
+    if ($data->payment_status == 'success') {
+        // ALL CLEAR !
+        $DB->insert_record("enrol_paystack", $data);
 
-// Enrol user.
-$plugin->enrol_user($plugininstance, $user->id, $plugininstance->roleid, $timestart, $timeend);
-
-// Pass $view=true to filter hidden caps if the user cannot see them.
-if ($users = get_users_by_capability(
-    $context,
-    'moodle/course:update',
-    'u.*',
-    'u.id ASC',
-    '',
-    '',
-    '',
-    '',
-    false,
-    true
-)) {
-    $users = sort_by_roleassignment_authority($users, $context);
-    $teacher = array_shift($users);
-} else {
-    $teacher = false;
-}
-
-$mailstudents = $plugin->get_config('mailstudents');
-$mailteachers = $plugin->get_config('mailteachers');
-$mailadmins   = $plugin->get_config('mailadmins');
-$shortname = format_string($course->shortname, true, array('context' => $context));
-
-
-if (!empty($mailstudents)) {
-    $a = new stdClass();
-    $a->coursename = format_string($course->fullname, true, array('context' => $coursecontext));
-    $a->profileurl = "$CFG->wwwroot/user/view.php?id=$user->id";
-
-    $eventdata = new \core\message\message();
-    $eventdata->modulename        = 'moodle';
-    $eventdata->component         = 'enrol_paystack';
-    $eventdata->name              = 'paystack_enrolment';
-    $eventdata->userfrom          = empty($teacher) ? core_user::get_support_user() : $teacher;
-    $eventdata->userto            = $user;
-    $eventdata->subject           = get_string("enrolmentnew", 'enrol', $shortname);
-    $eventdata->fullmessage       = get_string('welcometocoursetext', '', $a);
-    $eventdata->fullmessageformat = FORMAT_PLAIN;
-    $eventdata->fullmessagehtml   = '';
-    $eventdata->smallmessage      = '';
-    message_send($eventdata);
-}
-
-if (!empty($mailteachers) && !empty($teacher)) {
-    $a->course = format_string($course->fullname, true, array('context' => $coursecontext));
-    $a->user = fullname($user);
-
-    $eventdata = new \core\message\message();
-    $eventdata->modulename        = 'moodle';
-    $eventdata->component         = 'enrol_paystack';
-    $eventdata->name              = 'paystack_enrolment';
-    $eventdata->userfrom          = $user;
-    $eventdata->userto            = $teacher;
-    $eventdata->subject           = get_string("enrolmentnew", 'enrol', $shortname);
-    $eventdata->fullmessage       = get_string('enrolmentnewuser', 'enrol', $a);
-    $eventdata->fullmessageformat = FORMAT_PLAIN;
-    $eventdata->fullmessagehtml   = '';
-    $eventdata->smallmessage      = '';
-    message_send($eventdata);
-}
-
-if (!empty($mailadmins)) {
-    $a->course = format_string($course->fullname, true, array('context' => $coursecontext));
-    $a->user = fullname($user);
-    $admins = get_admins();
-    foreach ($admins as $admin) {
-        $eventdata = new \core\message\message();
-        $eventdata->modulename        = 'moodle';
-        $eventdata->component         = 'enrol_paystack';
-        $eventdata->name              = 'paystack_enrolment';
-        $eventdata->userfrom          = $user;
-        $eventdata->userto            = $admin;
-        $eventdata->subject           = get_string("enrolmentnew", 'enrol', $shortname);
-        $eventdata->fullmessage       = get_string('enrolmentnewuser', 'enrol', $a);
-        $eventdata->fullmessageformat = FORMAT_PLAIN;
-        $eventdata->fullmessagehtml   = '';
-        $eventdata->smallmessage      = '';
-        message_send($eventdata);
+        if ($plugin_instance->enrolperiod) {
+            $timestart = time();
+            $timeend   = $timestart + $plugin_instance->enrolperiod;
+        } else {
+            $timestart = 0;
+            $timeend   = 0;
+        }
+        // Enrol user.
+        $plugin->enrol_user($plugin_instance, $user->id, $plugin_instance->roleid, $timestart, $timeend);
+        // Pass $view=true to filter hidden caps if the user cannot see them.
+        if ($users = get_users_by_capability(
+            $context,
+            'moodle/course:update',
+            'u.*',
+            'u.id ASC',
+            '',
+            '',
+            '',
+            '',
+            false,
+            true
+        )) {
+            $users = sort_by_roleassignment_authority($users, $context);
+            $teacher = array_shift($users);
+        } else {
+            $teacher = false;
+        }
+        $mailstudents = $plugin->get_config('mailstudents');
+        $mailteachers = $plugin->get_config('mailteachers');
+        $mailadmins   = $plugin->get_config('mailadmins');
+        $shortname = format_string($course->shortname, true, array('context' => $context));
+        if (!empty($mailstudents)) {
+            $a = new stdClass();
+            $a->coursename = format_string($course->fullname, true, array('context' => $coursecontext));
+            $a->profileurl = "$CFG->wwwroot/user/view.php?id=$user->id";
+            $eventdata = new \core\message\message();
+            $eventdata->modulename        = 'moodle';
+            $eventdata->component         = 'enrol_paystack';
+            $eventdata->name              = 'paystack_enrolment';
+            $eventdata->userfrom          = empty($teacher) ? core_user::get_support_user() : $teacher;
+            $eventdata->userto            = $user;
+            $eventdata->subject           = get_string("enrolmentnew", 'enrol', $shortname);
+            $eventdata->fullmessage       = get_string('welcometocoursetext', '', $a);
+            $eventdata->fullmessageformat = FORMAT_PLAIN;
+            $eventdata->fullmessagehtml   = '';
+            $eventdata->smallmessage      = '';
+            message_send($eventdata);
+        }
+        if (!empty($mailteachers) && !empty($teacher)) {
+            $a->course = format_string($course->fullname, true, array('context' => $coursecontext));
+            $a->user = fullname($user);
+            $eventdata = new \core\message\message();
+            $eventdata->modulename        = 'moodle';
+            $eventdata->component         = 'enrol_paystack';
+            $eventdata->name              = 'paystack_enrolment';
+            $eventdata->userfrom          = $user;
+            $eventdata->userto            = $teacher;
+            $eventdata->subject           = get_string("enrolmentnew", 'enrol', $shortname);
+            $eventdata->fullmessage       = get_string('enrolmentnewuser', 'enrol', $a);
+            $eventdata->fullmessageformat = FORMAT_PLAIN;
+            $eventdata->fullmessagehtml   = '';
+            $eventdata->smallmessage      = '';
+            message_send($eventdata);
+        }
+        if (!empty($mailadmins)) {
+            $a->course = format_string($course->fullname, true, array('context' => $coursecontext));
+            $a->user = fullname($user);
+            $admins = get_admins();
+            foreach ($admins as $admin) {
+                $eventdata = new \core\message\message();
+                $eventdata->modulename        = 'moodle';
+                $eventdata->component         = 'enrol_paystack';
+                $eventdata->name              = 'paystack_enrolment';
+                $eventdata->userfrom          = $user;
+                $eventdata->userto            = $admin;
+                $eventdata->subject           = get_string("enrolmentnew", 'enrol', $shortname);
+                $eventdata->fullmessage       = get_string('enrolmentnewuser', 'enrol', $a);
+                $eventdata->fullmessageformat = FORMAT_PLAIN;
+                $eventdata->fullmessagehtml   = '';
+                $eventdata->smallmessage      = '';
+                message_send($eventdata);
+            }
+        }
+    } else {
+        message_paystack_error_to_admin(
+            "Payment status not successful" . $data->memo,
+            $data
+        );
     }
 }
 
-$destination = "$CFG->wwwroot/course/view.php?id=$course->id";
-
 $fullname = format_string($course->fullname, true, array('context' => $context));
-
 if (is_enrolled($context, null, '', true)) { // TODO: use real paystack check.
-    redirect($destination, get_string('paymentthanks', '', $fullname));
+    redirect($courseUrl, get_string('paymentthanks', '', $fullname));
 } else {   // Somehow they aren't enrolled yet!
-    $PAGE->set_url($destination);
+    $PAGE->set_url($courseUrl);
     echo $OUTPUT->header();
     $a = new stdClass();
     $a->teacher = get_string('defaultcourseteacher');
     $a->fullname = $fullname;
-    notice(get_string('paymentsorry', '', $a), $destination);
+    notice(get_string('paymentsorry', '', $a), $courseUrl);
 }
 
-
 // --- HELPER FUNCTIONS --------------------------------------------------------------------------------------!
-
 /**
  * Send payment error message to the admin.
  *
@@ -309,13 +279,10 @@ function message_paystack_error_to_admin($subject, $data)
 {
     $admin = get_admin();
     $site = get_site();
-
     $message = "$site->fullname:  Transaction failed.\n\n$subject\n\n";
-
     foreach ($data as $key => $value) {
         $message .= s($key) . " => " . s($value) . "\n";
     }
-
     $eventdata = new \core\message\message();
     $eventdata->modulename        = 'moodle';
     $eventdata->component         = 'enrol_paystack';
