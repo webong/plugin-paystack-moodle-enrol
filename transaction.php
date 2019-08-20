@@ -145,17 +145,39 @@ if (curl_errno($curl)) {
     );
 }
 
-curl_close($curl);
-
 // Send the file, this line will be reached if no error was thrown above.
 $data->txn_id = $res->data->reference;
 $data->tax = $res->data->amount / 100;
 $data->memo = $res->message;
 $data->payment_status = $res->data->status;
 $data->pending_reason = $res->data->gateway_response;
-$data->reason_code = $res->failure_code;
+$data->reason_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
 
+curl_close($curl);
 // ALL CLEAR !
+
+// check the payment_status and payment_reason
+
+// If status is not completed then unenrol the student if already enrolled
+// and notify admin
+
+if ($data->payment_status != "success") {
+    $plugin->unenrol_user($plugin_instance, $data->userid);
+    message_paystack_error_to_admin(
+        "Status not successful or pending. User unenrolled from course",
+        $data
+    );
+    die;
+}
+
+// If currency is incorrectly set then someone maybe trying to cheat the system
+if ($data->currency_code != $plugin_instance->currency) {
+    message_paystack_error_to_admin(
+        "Currency does not match course settings, received: " . $data->mc_currency,
+        $data
+    );
+    die;
+}
 
 $DB->insert_record("enrol_paystack", $data);
 
