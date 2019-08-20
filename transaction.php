@@ -122,7 +122,7 @@ if ((float) $plugininstance->cost <= 0) {
 $cost = format_float($cost, 2, false);
 
 $curl = curl_init();
-$paystackaddr = "https://api.paystack.co/transaction/verify/" . $data->paystack - reference;
+$paystackaddr = "https://api.paystack.co/transaction/verify/" . $data->reference;
 curl_setopt_array($curl, [
     CURLOPT_URL => $paystackaddr,
     CURLOPT_RETURNTRANSFER => true,
@@ -134,7 +134,7 @@ curl_setopt_array($curl, [
     ],
 ]);
 
-$res = curl_exec($curl);
+$request = curl_exec($curl);
 
 if (curl_errno($curl)) {
     throw new moodle_exception(
@@ -145,6 +145,13 @@ if (curl_errno($curl)) {
         json_encode($data)
     );
 }
+
+if($request){
+    $res = json_decode($request, true);
+}
+
+var_dump($res);
+die;
 
 // Send the file, this line will be reached if no error was thrown above.
 $data->txn_id = $res->data->reference;
@@ -309,7 +316,7 @@ function message_paystack_error_to_admin($subject, $data)
         $message .= s($key) . " => " . s($value) . "\n";
     }
 
-    $eventdata = new stdClass();
+    $eventdata = new \core\message\message();
     $eventdata->modulename        = 'moodle';
     $eventdata->component         = 'enrol_paystack';
     $eventdata->name              = 'paystack_enrolment';

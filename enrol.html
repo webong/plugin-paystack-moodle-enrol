@@ -25,7 +25,7 @@
             <input type="hidden" name="email" value="<?php p($USER->email) ?>" />
             <script 
                 src="https://js.paystack.co/v1/inline.js" 
-                data-label="<?php echo get_string('btntext','enrol_stripepayment') ?>"
+                data-label="<?php echo get_string('btntext','enrol_paystack') ?>"
                 data-key="<?php echo $publickey; ?>"
                 data-ref="<?php echo $reference; ?>" 
                 data-email="<?php p($USER->email) ?>"
