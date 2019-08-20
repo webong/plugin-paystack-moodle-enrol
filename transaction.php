@@ -163,7 +163,6 @@ curl_close($curl);
 // and notify admin
 
 if ($data->payment_status != "success") {
-    $plugin->unenrol_user($plugin_instance, $data->userid);
     message_paystack_error_to_admin(
         "Status not successful or pending. User unenrolled from course",
         $data
