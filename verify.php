@@ -92,6 +92,7 @@ $data->item_name = $course->fullname;
 
 $plugin_instance = $DB->get_record("enrol", array("id" => $data->instanceid, "enrol" => "paystack", "status" => 0), "*", MUST_EXIST);
 $plugin = enrol_get_plugin('paystack');
+$plugin_logger = new \enrol_paystack\paystack_plugin_tracker('moodle-enrol', $plugin->get_config('publickey'));
 
 // Set Course and Paystack Url
 $courseUrl = "$CFG->wwwroot/course/view.php?id=$course->id";
@@ -167,6 +168,8 @@ if ($data->payment_gross < $cost) {
 
 if ($data->payment_status == 'success') {
     // ALL CLEAR !
+    $plugin_logger->log_transaction_success($data->reference);
+
     $DB->insert_record("enrol_paystack", $data);
 
     if ($plugin_instance->enrolperiod) {
