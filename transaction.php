@@ -99,7 +99,7 @@ $paystackUrl = "https://api.paystack.co/transaction/verify/" . $data->reference;
 
 $curl = curl_init();
 curl_setopt_array($curl, [
-    CURLOPT_URL => $url,
+    CURLOPT_URL => $paystackUrl,
     CURLOPT_RETURNTRANSFER => true,
     CURLOPT_CUSTOMREQUEST => "GET",
     CURLOPT_HTTPHEADER => [
