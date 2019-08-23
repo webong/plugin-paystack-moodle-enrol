@@ -380,7 +380,7 @@ class enrol_paystack_plugin extends enrol_plugin
      */
     public function get_currencies()
     {
-        $codes = array('NGN', 'USD');
+        $codes = array('NGN', 'USD', 'GHS');
         $currencies = array();
         foreach ($codes as $c) {
             $currencies[$c] = new lang_string($c, 'core_currencies');
