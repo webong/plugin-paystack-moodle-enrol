@@ -96,7 +96,7 @@ $plugin_logger = new \enrol_paystack\paystack_plugin_tracker('moodle-enrol', $pl
 
 // Set Course and Paystack Url
 $courseUrl = "$CFG->wwwroot/course/view.php?id=$course->id";
-$paystackUrl = $plugin->get_config('baseUrl') . "transaction/verify/" . $data->reference;
+$paystackUrl = "https://api.paystack.co/transaction/verify/" . $data->reference;
 
 $curl = curl_init();
 curl_setopt_array($curl, [

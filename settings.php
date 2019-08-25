@@ -48,14 +48,6 @@ if ($ADMIN->fulltree) {
         PARAM_TEXT
     ));
 
-    $settings->add(new admin_setting_configtext(
-        'enrol_paystack/baseUrl',
-        get_string('baseUrl', 'enrol_paystack'),
-        get_string('baseUrl_desc', 'enrol_paystack'),
-        'https://api.paystack.co/',
-        PARAM_TEXT
-    ));
-
     $settings->add(new admin_setting_configcheckbox(
         'enrol_paystack/mailstudents',
         get_string('mailstudents', 'enrol_paystack'),
