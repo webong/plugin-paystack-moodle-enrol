@@ -28,4 +28,4 @@ $plugin->component = 'enrol_paystack';
 $plugin->release = '0.1.0';
 $plugin->version = 2019081900;
 $plugin->requires = 2018120300;
-$plugin->maturity = MATURITY_ALPHA;
+$plugin->maturity = MATURITY_STABLE;
