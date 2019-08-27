@@ -11,7 +11,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 /**
- * Listens for Instant Payment Notification from Paystack
+ * Listens for Instant Payment Webhook Notification from Paystack
  *
  * This script waits for Payment notification from Paystack,
  * then double checks that data by sending it back to Paystack.
@@ -35,7 +35,6 @@ if ($CFG->version < 2018101900) {
 require_once($CFG->libdir . '/enrollib.php');
 require_once($CFG->libdir . '/filelib.php');
 
-require_login();
 // Paystack does not like when we return error messages here,
 // the custom handler just logs exceptions and stops.
 set_exception_handler('enrol_paystack_charge_exception_handler');
@@ -93,39 +92,12 @@ $data->item_name = $course->fullname;
 
 $plugin_instance = $DB->get_record("enrol", array("id" => $data->instanceid, "enrol" => "paystack", "status" => 0), "*", MUST_EXIST);
 $plugin = enrol_get_plugin('paystack');
-$plugin_logger = new \enrol_paystack\paystack_plugin_tracker('moodle-enrol', $plugin->get_publickey());
+$paystack = new \enrol_paystack\Paystack('moodle-enrol', $plugin->get_publickey(), $plugin->secretkey());
 
 // Set Course and Paystack Url
 $courseUrl = "$CFG->wwwroot/course/view.php?id=$course->id";
-$paystackUrl = "https://api.paystack.co/transaction/verify/" . $data->reference;
 
-$curl = curl_init();
-curl_setopt_array($curl, [
-    CURLOPT_URL => $paystackUrl,
-    CURLOPT_RETURNTRANSFER => true,
-    CURLOPT_CUSTOMREQUEST => "GET",
-    CURLOPT_HTTPHEADER => [
-        "authorization: Bearer " . $plugin->get_secretkey(), //replace this with your own test key
-        "content-type: application/json",
-        "cache-control: no-cache"
-    ],
-]);
-
-$request = curl_exec($curl);
-$res = json_decode($request, true);
-$code = curl_getinfo($curl, CURLINFO_HTTP_CODE);
-
-if (curl_errno($curl)) {
-    throw new moodle_exception(
-        'errpaystackconnect',
-        'enrol_paystack',
-        '',
-        array('url' => $paystackUrl, 'response' => $res),
-        json_encode($data)
-    );
-}
-
-curl_close($curl);
+$res = $paystack->verify_transaction($data->reference);
 
 if (!$res['status']) { 
     notice($res['message'], $courseUrl);   
@@ -169,7 +141,7 @@ if ($data->payment_gross < $cost) {
 
 if ($data->payment_status == 'success') {
     // ALL CLEAR !
-    $plugin_logger->log_transaction_success($data->reference);
+    $paystack->log_transaction_success($data->reference);
 
     $DB->insert_record("enrol_paystack", $data);
 

@@ -11,7 +11,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 /**
- * Track Payment Transactions from this Plugin
+ * Paystack API Class
  *
  * @package    enrol_paystack
  * @copyright  2019 Paystack
@@ -22,22 +22,33 @@ namespace enrol_paystack;
 
 defined('MOODLE_INTERNAL') || die();
 
-class paystack_plugin_tracker {
-    var $public_key;
-    var $plugin_name;
-    function __construct($plugin, $pk){
+class Paystack {
+    public $plugin_name;
+    public $public_key;
+    public $secret_key;
+
+    public function __construct($plugin, $pk, $sk){
         //configure plugin name
         //configure public key
+        $this->base_url = "https://api.paystack.co/";
         $this->plugin_name = $plugin;
         $this->public_key = $pk;
+        $this->secret_key = $sk;
     }
-   
-    function log_transaction_success($trx_ref){
+    
+    /**
+     * Track Payment Transactions from this Plugin
+     *
+     * @param string $trx_ref
+     * @return void
+     */
+    public function log_transaction_success($reference)
+    {
         //send reference to logger along with plugin name and public key
         $url = "https://plugin-tracker.paystackintegrations.com/log/charge_success";
         $params = [
             'plugin_name'  => $this->plugin_name,
-            'transaction_reference' => $trx_ref,
+            'transaction_reference' => $reference,
             'public_key' => $this->public_key
         ];
         $params_string = http_build_query($params);
@@ -49,5 +60,46 @@ class paystack_plugin_tracker {
         //execute post
         $result = curl_exec($ch);
         //  echo $result;
+    }
+
+    /**
+     * Verify Payment Transaction
+     *
+     * @param string $reference
+     * @return void
+     */
+    public function verify_transaction($reference)
+    {
+        $paystackUrl = $this->base_url . "transaction/verify/" . $reference;
+
+        $curl = curl_init();
+        curl_setopt_array($curl, [
+            CURLOPT_URL => $paystackUrl,
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_CUSTOMREQUEST => "GET",
+            CURLOPT_HTTPHEADER => [
+                "authorization: Bearer " . $this->secretkey,
+                "content-type: application/json",
+                "cache-control: no-cache"
+            ],
+        ]);
+
+        $request = curl_exec($curl);
+        $res = json_decode($request, true);
+        $code = curl_getinfo($curl, CURLINFO_HTTP_CODE);
+
+        if (curl_errno($curl)) {
+            throw new moodle_exception(
+                'errpaystackconnect',
+                'enrol_paystack',
+                '',
+                array('url' => $paystackUrl, 'response' => $res),
+                json_encode($data)
+            );
+        }
+
+        curl_close($curl);
+
+        return $res;
     }
 }
