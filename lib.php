@@ -47,13 +47,25 @@ class enrol_paystack_plugin extends enrol_plugin
     }
 
     /**
+     * Return connection mode of this enrol plugin.
+     *
+     * @return boolean
+     */
+    public function get_mode()
+    {
+        return $this->get_config('mode') == "1" ? true : false;
+    }
+
+    /**
      * Return public key of this enrol plugin.
      *
      * @return string
      */
     public function get_publickey()
     {
-        
+        return $this->get_mode() ? 
+            $this->get_config('live_publickey') :
+            $this->get_config('test_publickey') ;
     }
 
     /**
@@ -63,9 +75,10 @@ class enrol_paystack_plugin extends enrol_plugin
      */
     public function get_secretkey()
     {
-
+        return $this->get_mode() ? 
+            $this->get_config('live_secretkey') :
+            $this->get_config('test_secretkey') ;
     }
-
 
     /**
      * Defines if user can be managed from admin.

@@ -25,6 +25,12 @@
 
 defined('MOODLE_INTERNAL') || die();
 
+/** Paystack live mode disabled. */
+define('LIVE_MODE_DISABLED', 0);
+
+/** Paystack live mode enabled.*/
+define('LIVE_MODE_ENABLED', 1);
+
 if ($ADMIN->fulltree) {
     $settings->add(new admin_setting_heading(
         'enrol_paystack_enrolname_short',
@@ -104,8 +110,13 @@ if ($ADMIN->fulltree) {
         ENROL_EXT_REMOVED_SUSPENDNOROLES => get_string('extremovedsuspendnoroles', 'enrol'),
         ENROL_EXT_REMOVED_UNENROL        => get_string('extremovedunenrol', 'enrol'),
     );
-    $settings->add(new admin_setting_configselect('enrol_paystack/expiredaction', get_string('expiredaction', 'enrol_paystack'), get_string('expiredaction_help', 'enrol_paystack'), ENROL_EXT_REMOVED_SUSPENDNOROLES, $options));
-
+    $settings->add(new admin_setting_configselect(
+        'enrol_paystack/expiredaction', 
+        get_string('expiredaction', 'enrol_paystack'), 
+        get_string('expiredaction_help', 'enrol_paystack'), 
+        ENROL_EXT_REMOVED_SUSPENDNOROLES, 
+        $options
+    ));
 
     // --- enrol instance defaults ----------------------------------------------------------------------------
     $settings->add(new admin_setting_heading(
