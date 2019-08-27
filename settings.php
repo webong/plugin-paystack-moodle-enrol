@@ -32,18 +32,46 @@ if ($ADMIN->fulltree) {
         get_string('pluginname_desc', 'enrol_paystack')
     ));
 
+    $options = array(
+        LIVE_MODE_ENABLED  => get_string('mode_live', 'enrol_paystack'),
+        LIVE_MODE_DISABLED => get_string('mode_test', 'enrol_paystack')
+    );
+    $settings->add(new admin_setting_configselect(
+        'enrol_paystack/mode',
+        get_string('mode', 'enrol_paystack'),
+        get_string('mode_desc', 'enrol_paystack'),
+        LIVE_MODE_DISABLED,
+        $options
+    ));
+
     $settings->add(new admin_setting_configtext(
-        'enrol_paystack/secretkey',
-        get_string('secretkey', 'enrol_paystack'),
-        get_string('secretkey_desc', 'enrol_paystack'),
+        'enrol_paystack/live_secretkey',
+        get_string('live_secretkey', 'enrol_paystack'),
+        get_string('live_secretkey_desc', 'enrol_paystack'),
         '',
         PARAM_TEXT
     ));
 
     $settings->add(new admin_setting_configtext(
-        'enrol_paystack/publickey',
-        get_string('publickey', 'enrol_paystack'),
-        get_string('publickey_desc', 'enrol_paystack'),
+        'enrol_paystack/live_publickey',
+        get_string('live_publickey', 'enrol_paystack'),
+        get_string('live_publickey_desc', 'enrol_paystack'),
+        '',
+        PARAM_TEXT
+    ));
+
+    $settings->add(new admin_setting_configtext(
+        'enrol_paystack/test_secretkey',
+        get_string('test_secretkey', 'enrol_paystack'),
+        get_string('test_secretkey_desc', 'enrol_paystack'),
+        '',
+        PARAM_TEXT
+    ));
+
+    $settings->add(new admin_setting_configtext(
+        'enrol_paystack/test_publickey',
+        get_string('test_publickey', 'enrol_paystack'),
+        get_string('test_publickey_desc', 'enrol_paystack'),
         '',
         PARAM_TEXT
     ));
