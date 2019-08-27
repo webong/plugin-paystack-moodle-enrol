@@ -47,6 +47,40 @@ class enrol_paystack_plugin extends enrol_plugin
     }
 
     /**
+     * Return connection mode of this enrol plugin.
+     *
+     * @return boolean
+     */
+    public function get_mode()
+    {
+        return $this->get_config('mode') == "1" ? true : false;
+    }
+
+    /**
+     * Return public key of this enrol plugin.
+     *
+     * @return string
+     */
+    public function get_publickey()
+    {
+        return $this->get_mode() ? 
+            $this->get_config('live_publickey') :
+            $this->get_config('test_publickey') ;
+    }
+
+    /**
+     * Return secret key of this enrol plugin.
+     *
+     * @return string
+     */
+    public function get_secretkey()
+    {
+        return $this->get_mode() ? 
+            $this->get_config('live_secretkey') :
+            $this->get_config('test_secretkey') ;
+    }
+
+    /**
      * Defines if user can be managed from admin.
      *
      * @param  stdClass $instance course enrol instance
@@ -365,7 +399,7 @@ class enrol_paystack_plugin extends enrol_plugin
                 $userlastname    = $USER->lastname;
                 $instancename    = $this->get_instance_name($instance);
 
-                $publickey = $this->get_config('publickey');
+                $publickey = $this->get_publickey();
                 $reference = $this->getHashedToken();
                 include($CFG->dirroot.'/enrol/paystack/enrol.html');
             }
