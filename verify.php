@@ -28,6 +28,7 @@ define('NO_DEBUG_DISPLAY', true);
 
 require('../../config.php');
 require_once('lib.php');
+
 if ($CFG->version < 2018101900) {
     require_once($CFG->libdir . '/eventslib.php');
 }
@@ -92,7 +93,7 @@ $data->item_name = $course->fullname;
 
 $plugin_instance = $DB->get_record("enrol", array("id" => $data->instanceid, "enrol" => "paystack", "status" => 0), "*", MUST_EXIST);
 $plugin = enrol_get_plugin('paystack');
-$plugin_logger = new \enrol_paystack\paystack_plugin_tracker('moodle-enrol', $plugin->get_config('publickey'));
+$plugin_logger = new \enrol_paystack\paystack_plugin_tracker('moodle-enrol', $plugin->get_publickey());
 
 // Set Course and Paystack Url
 $courseUrl = "$CFG->wwwroot/course/view.php?id=$course->id";
@@ -104,7 +105,7 @@ curl_setopt_array($curl, [
     CURLOPT_RETURNTRANSFER => true,
     CURLOPT_CUSTOMREQUEST => "GET",
     CURLOPT_HTTPHEADER => [
-        "authorization: Bearer " . $plugin->get_config('secretkey'), //replace this with your own test key
+        "authorization: Bearer " . $plugin->get_secretkey(), //replace this with your own test key
         "content-type: application/json",
         "cache-control: no-cache"
     ],

@@ -47,6 +47,27 @@ class enrol_paystack_plugin extends enrol_plugin
     }
 
     /**
+     * Return public key of this enrol plugin.
+     *
+     * @return string
+     */
+    public function get_publickey()
+    {
+        
+    }
+
+    /**
+     * Return secret key of this enrol plugin.
+     *
+     * @return string
+     */
+    public function get_secretkey()
+    {
+
+    }
+
+
+    /**
      * Defines if user can be managed from admin.
      *
      * @param  stdClass $instance course enrol instance
@@ -365,7 +386,7 @@ class enrol_paystack_plugin extends enrol_plugin
                 $userlastname    = $USER->lastname;
                 $instancename    = $this->get_instance_name($instance);
 
-                $publickey = $this->get_config('publickey');
+                $publickey = $this->get_publickey();
                 $reference = $this->getHashedToken();
                 include($CFG->dirroot.'/enrol/paystack/enrol.html');
             }
