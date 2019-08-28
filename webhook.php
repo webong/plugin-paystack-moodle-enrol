@@ -24,10 +24,10 @@
  */
 // Disable moodle specific debug messages and any errors in output,
 // comment out when debugging or better look into error log!
-define('NO_DEBUG_DISPLAY', true);
+// define('NO_DEBUG_DISPLAY', true);
 
 require('../../config.php');
-require_once('lib.php');
+require_once("$CFG->dirroot/enrol/paystack/lib.php");
 
 if ($CFG->version < 2018101900) {
     require_once($CFG->libdir . '/eventslib.php');
@@ -37,7 +37,7 @@ require_once($CFG->libdir . '/filelib.php');
 
 // Paystack does not like when we return error messages here,
 // the custom handler just logs exceptions and stops.
-set_exception_handler('enrol_paystack_charge_exception_handler');
+// set_exception_handler('enrol_paystack_charge_exception_handler');
 
 // Make sure we are enabled in the first place.
 if (!enrol_is_enabled('paystack')) {
@@ -52,7 +52,7 @@ if ((strtoupper($_SERVER['REQUEST_METHOD']) != 'POST' ) || !array_key_exists('HT
 }
 
 $input = @file_get_contents("php://input");
-$res = json_decode($input);
+$res = (array) json_decode($input, true);
 
 $data = new stdClass();
 
@@ -91,8 +91,8 @@ $PAGE->set_context($context);
 $data->item_name = $course->fullname;
 
 $plugin_instance = $DB->get_record("enrol", array("id" => $data->instanceid, "enrol" => "paystack", "status" => 0), "*", MUST_EXIST);
+$paystack = new \enrol_paystack\paystack('moodle-enrol', $plugin->get_publickey(), $plugin->secretkey());
 $plugin = enrol_get_plugin('paystack');
-$paystack = new \enrol_paystack\Paystack('moodle-enrol', $plugin->get_publickey(), $plugin->secretkey());
 
 // validate event do all at once to avoid timing attack
 if($paystack->validate_webhook($input))

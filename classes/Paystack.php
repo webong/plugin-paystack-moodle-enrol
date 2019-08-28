@@ -22,7 +22,7 @@ namespace enrol_paystack;
 
 defined('MOODLE_INTERNAL') || die();
 
-class Paystack {
+class paystack {
     public $plugin_name;
     public $public_key;
     public $secret_key;
