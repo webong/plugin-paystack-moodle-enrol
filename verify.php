@@ -20,10 +20,10 @@
 require("../../config.php");
 require_once("$CFG->dirroot/enrol/paystack/lib.php");
 
-$custom = explode('-', required_param('custom', array(), PARAM_RAW));
-$userid           = (int)$custom[0];
-$courseid         = (int)$custom[1];
-$instanceid       = (int)$custom[2];
+$custom      = explode('-', optional_param('custom', array(), PARAM_RAW));
+$userid      = (int)$custom[0];
+$courseid    = (int)$custom[1];
+$instanceid  = (int)$custom[2];
 
 if (!$course = $DB->get_record("course", array("id" => $courseid))) {
     redirect($CFG->wwwroot);
