@@ -32,10 +32,19 @@ define('LIVE_MODE_DISABLED', 0);
 define('LIVE_MODE_ENABLED', 1);
 
 if ($ADMIN->fulltree) {
+    global $CFG;
+
     $settings->add(new admin_setting_heading(
         'enrol_paystack_enrolname_short',
         '',
         get_string('pluginname_desc', 'enrol_paystack')
+    ));
+
+    $settings->add(new admin_setting_description(
+        'enrol_paystack/webhook',
+        get_string('webhook', 'enrol_paystack'),
+        get_string('webhook_desc', 'enrol_paystack'),
+        "$CFG->wwwroot/enrol/paystack/webhook.php"
     ));
 
     $options = array(
