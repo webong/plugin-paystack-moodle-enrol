@@ -3,43 +3,36 @@
     <p><?php echo $message; ?></p>
     <p><b><?php echo get_string("cost").": {$instance->currency} {$localisedcost}"; ?></b></p>
     <div>
-
-        <form method="post" action="<?php echo "$CFG->wwwroot/enrol/paystack/verify.php"?>">
-            <?php
-                $metdata = [
-                    "cmd" => "_xclick",
-                    "charset" => "utf-8",
-                    "item_name" => p($coursefullname),
-                    "item_name" => p($coursefullname),
-                    "item_number" => p($courseshortname),
-                    "quantity" => "1",
-                    "on0" => print_string("user"),
-                    "os0" => p($userfullname),
-                    "custom" => echo "{$USER->id}-{$course->id}-{$instance->id}",
-                    "currency_code" => p($instance->currency),
-                    "amount" => p($cost),
-                    "for_auction" => "false",
-                    "no_note" => "1",
-                    "no_shipping" => "1" ,
-                    "rm" => "2",
-                    "cbt" => print_string("continuetocourse"),
-                    "first_name" => p($userfirstname),
-                    "last_name" => p($userlastname),
-                    "email" => p($USER->email),
-                ];
-
-            ?>
-            <script 
-                src="https://js.paystack.co/v1/inline.js" 
-                data-label="<?php echo get_string('btntext','enrol_paystack') ?>"
-                data-key="<?php echo $publickey; ?>"
-                data-ref="<?php echo $reference; ?>" 
-                data-email="<?php p($USER->email) ?>"
-                data-description="Enrolment Cost (<?php p($instance->currency) ?><?php p($cost) ?>)" 
-                data-currency="<?php p($instance->currency) ?>" 
-                data-amount="<?php p($cost * 100) ?>"
-                data-metadata= '<?php json_encode($metdata) ?>'
-                data-locale="<?php echo current_language(); ?>">
+        <?php
+            $data = [
+                "cmd" => "_xclick",
+                "charset" => "utf-8",
+                "item_name" => $coursefullname,
+                "item_name" => $coursefullname,
+                "item_number" => $courseshortname,
+                "quantity" => "1",
+                "on0" => print_string("user"),
+                "os0" => $userfullname,
+                "custom" => "{$USER->id}-{$course->id}-{$instance->id}",
+                "currency_code" => $instance->currency,
+                "amount" => $cost,
+                "for_auction" => "false",
+                "no_note" => "1",
+                "no_shipping" => "1" ,
+                "rm" => "2",
+                "cbt" => print_string("continuetocourse"),
+                "first_name" => $userfirstname,
+                "last_name" => $userlastname,
+                "email" => $USER->email,
+            ];
+        ?>
+        <form method="post" action="<?php echo "$CFG->wwwroot/enrol/paystack/verify.php?id=$course->id"?>">
+            <script src="https://js.paystack.co/v1/inline.js"
+                data-label="<?php echo get_string('btntext','enrol_paystack') ?>" data-key="<?php echo $publickey; ?>"
+                data-ref="<?php echo $reference; ?>" data-email="<?php p($USER->email) ?>"
+                data-description="Enrolment Cost (<?php p($instance->currency) ?><?php p($cost) ?>)"
+                data-currency="<?php p($instance->currency) ?>" data-amount="<?php p($cost * 100) ?>"
+                data-metadata='<?php echo json_encode($data) ?>' data-locale="<?php echo current_language(); ?>">
             </script>
         </form>
 
