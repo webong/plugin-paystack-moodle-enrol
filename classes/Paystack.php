@@ -54,7 +54,7 @@ class paystack {
             CURLOPT_POSTFIELDS => $data,
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_HTTPHEADER => [
-                "authorization: Bearer " . $this->secretkey,
+                "authorization: Bearer " . $this->secret_key,
                 "content-type: application/json",
                 "cache-control: no-cache"
             ],
@@ -94,7 +94,7 @@ class paystack {
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_CUSTOMREQUEST => "GET",
             CURLOPT_HTTPHEADER => [
-                "authorization: Bearer " . $this->secretkey,
+                "authorization: Bearer " . $this->secret_key,
                 "content-type: application/json",
                 "cache-control: no-cache"
             ],
