@@ -31,20 +31,16 @@ define('LIVE_MODE_DISABLED', 0);
 /** Paystack live mode enabled.*/
 define('LIVE_MODE_ENABLED', 1);
 
-if ($ADMIN->fulltree) {
-    global $CFG;
+global $CFG;
 
+if ($ADMIN->fulltree) {
+    $webhook = "$CFG->wwwroot/enrol/paystack/webhook.php";
+    $url = "https://dashboard.paystack.com/#/settings/developer";
+    $text = '<p>Add this Webhook Url <span style="color:blue; text-decoration:underline;">' . $webhook . '</span> to your paystack account developer settings page <a href="' . $url .'" target="_blank">here</a></p>';
     $settings->add(new admin_setting_heading(
         'enrol_paystack_enrolname_short',
         '',
-        get_string('pluginname_desc', 'enrol_paystack')
-    ));
-
-    $settings->add(new admin_setting_description(
-        'enrol_paystack/webhook',
-        get_string('webhook', 'enrol_paystack'),
-        get_string('webhook_desc', 'enrol_paystack'),
-        "$CFG->wwwroot/enrol/paystack/webhook.php"
+        get_string('pluginname_desc', 'enrol_paystack') . " " . $text
     ));
 
     $options = array(
@@ -120,10 +116,10 @@ if ($ADMIN->fulltree) {
         ENROL_EXT_REMOVED_UNENROL        => get_string('extremovedunenrol', 'enrol'),
     );
     $settings->add(new admin_setting_configselect(
-        'enrol_paystack/expiredaction', 
-        get_string('expiredaction', 'enrol_paystack'), 
-        get_string('expiredaction_help', 'enrol_paystack'), 
-        ENROL_EXT_REMOVED_SUSPENDNOROLES, 
+        'enrol_paystack/expiredaction',
+        get_string('expiredaction', 'enrol_paystack'),
+        get_string('expiredaction_help', 'enrol_paystack'),
+        ENROL_EXT_REMOVED_SUSPENDNOROLES,
         $options
     ));
 

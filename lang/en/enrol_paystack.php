@@ -95,4 +95,4 @@ $string['charge_description1'] = "Create customer for email receipt";
 $string['charge_description2'] = 'Charge for Course Enrolment Cost.';
 $string['paystack_sorry'] = "Sorry, you can not use the script that way.";
 $string['webhook'] = 'Paystack Webhook Url';
-$string['webhook_desc'] = 'Add this Webhook Url to your paystack account developer settings page here https://dashboard.paystack.com/#/settings/developer';
+$string['webhook_desc'] = 'Add this Webhook Url "{$a->webhook}" to your paystack account developer settings page <a href="{$a->url}">here</a>';
