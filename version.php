@@ -25,7 +25,7 @@
 defined('MOODLE_INTERNAL') || die();
 
 $plugin->component = 'enrol_paystack';
-$plugin->release = '1.1.1';
-$plugin->version = 2019082800;
+$plugin->release = '1.2.1';
+$plugin->version = 2019082822;
 $plugin->requires = 2018120300;
 $plugin->maturity = MATURITY_STABLE;
