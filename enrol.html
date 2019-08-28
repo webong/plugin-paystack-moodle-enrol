@@ -5,24 +5,30 @@
     <div>
 
         <form method="post" action="<?php echo "$CFG->wwwroot/enrol/paystack/verify.php"?>">
-            <input type="hidden" name="cmd" value="_xclick" />
-            <input type="hidden" name="charset" value="utf-8" />
-            <input type="hidden" name="item_name" value="<?php p($coursefullname) ?>" />
-            <input type="hidden" name="item_number" value="<?php p($courseshortname) ?>" />
-            <input type="hidden" name="quantity" value="1" />
-            <input type="hidden" name="on0" value="<?php print_string("user") ?>" />
-            <input type="hidden" name="os0" value="<?php p($userfullname) ?>" />
-            <input type="hidden" name="custom" value="<?php echo "{$USER->id}-{$course->id}-{$instance->id}" ?>" />
-            <input type="hidden" name="currency_code" value="<?php p($instance->currency) ?>" />
-            <input type="hidden" name="amount" value="<?php p($cost) ?>" />
-            <input type="hidden" name="for_auction" value="false" />
-            <input type="hidden" name="no_note" value="1" />
-            <input type="hidden" name="no_shipping" value="1" />
-            <input type="hidden" name="rm" value="2" />
-            <input type="hidden" name="cbt" value="<?php print_string("continuetocourse") ?>" />
-            <input type="hidden" name="first_name" value="<?php p($userfirstname) ?>" />
-            <input type="hidden" name="last_name" value="<?php p($userlastname) ?>" />
-            <input type="hidden" name="email" value="<?php p($USER->email) ?>" />
+            <?php
+                $metdata = [
+                    "cmd" => "_xclick",
+                    "charset" => "utf-8",
+                    "item_name" => p($coursefullname),
+                    "item_name" => p($coursefullname),
+                    "item_number" => p($courseshortname),
+                    "quantity" => "1",
+                    "on0" => print_string("user"),
+                    "os0" => p($userfullname),
+                    "custom" => echo "{$USER->id}-{$course->id}-{$instance->id}",
+                    "currency_code" => p($instance->currency),
+                    "amount" => p($cost),
+                    "for_auction" => "false",
+                    "no_note" => "1",
+                    "no_shipping" => "1" ,
+                    "rm" => "2",
+                    "cbt" => print_string("continuetocourse"),
+                    "first_name" => p($userfirstname),
+                    "last_name" => p($userlastname),
+                    "email" => p($USER->email),
+                ];
+
+            ?>
             <script 
                 src="https://js.paystack.co/v1/inline.js" 
                 data-label="<?php echo get_string('btntext','enrol_paystack') ?>"
@@ -32,6 +38,7 @@
                 data-description="Enrolment Cost (<?php p($instance->currency) ?><?php p($cost) ?>)" 
                 data-currency="<?php p($instance->currency) ?>" 
                 data-amount="<?php p($cost * 100) ?>"
+                data-metadata= '<?php json_encode($metdata) ?>'
                 data-locale="<?php echo current_language(); ?>">
             </script>
         </form>

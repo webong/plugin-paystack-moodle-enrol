@@ -35,7 +35,91 @@ class Paystack {
         $this->public_key = $pk;
         $this->secret_key = $sk;
     }
+
+     /**
+     * Verify Payment Transaction
+     *
+     * @param string $reference
+     * @param array $data
+     * @return void
+     */
+    public function initialize_transaction($data)
+    {
+        $paystackUrl = $this->base_url . "transaction/initialize";
+
+        $curl = curl_init();
+        curl_setopt_array($curl, [
+            CURLOPT_URL => $paystackUrl,
+            CURLOPT_CUSTOMREQUEST => "POST",
+            CURLOPT_POSTFIELDS => $data,
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_HTTPHEADER => [
+                "authorization: Bearer " . $this->secretkey,
+                "content-type: application/json",
+                "cache-control: no-cache"
+            ],
+        ]);
+
+        $request = curl_exec($curl);
+        $res = json_decode($request, true);
+
+        if (curl_errno($curl)) {
+            throw new moodle_exception(
+                'errpaystackconnect',
+                'enrol_paystack',
+                '',
+                array('url' => $paystackUrl, 'response' => $res),
+                json_encode($data)
+            );
+        }
+
+        curl_close($curl);
+
+        return $res;
+    }
     
+     /**
+     * Verify Payment Transaction
+     *
+     * @param string $reference
+     * @param array $data
+     * @return void
+     */
+    public function verify_transaction($reference, $data = [])
+    {
+        $paystackUrl = $this->base_url . "transaction/verify/" . $reference;
+
+        $curl = curl_init();
+        curl_setopt_array($curl, [
+            CURLOPT_URL => $paystackUrl,
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_CUSTOMREQUEST => "GET",
+            CURLOPT_HTTPHEADER => [
+                "authorization: Bearer " . $this->secretkey,
+                "content-type: application/json",
+                "cache-control: no-cache"
+            ],
+        ]);
+
+        $request = curl_exec($curl);
+        $res = json_decode($request, true);
+        // $code = curl_getinfo($curl, CURLINFO_HTTP_CODE);
+
+        if (curl_errno($curl)) {
+            throw new moodle_exception(
+                'errpaystackconnect',
+                'enrol_paystack',
+                '',
+                array('url' => $paystackUrl, 'response' => $res),
+                json_encode($data)
+            );
+        }
+
+        curl_close($curl);
+
+        return $res;
+    }
+
     /**
      * Track Payment Transactions from this Plugin
      *
@@ -60,46 +144,5 @@ class Paystack {
         //execute post
         $result = curl_exec($ch);
         //  echo $result;
-    }
-
-    /**
-     * Verify Payment Transaction
-     *
-     * @param string $reference
-     * @return void
-     */
-    public function verify_transaction($reference)
-    {
-        $paystackUrl = $this->base_url . "transaction/verify/" . $reference;
-
-        $curl = curl_init();
-        curl_setopt_array($curl, [
-            CURLOPT_URL => $paystackUrl,
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_CUSTOMREQUEST => "GET",
-            CURLOPT_HTTPHEADER => [
-                "authorization: Bearer " . $this->secretkey,
-                "content-type: application/json",
-                "cache-control: no-cache"
-            ],
-        ]);
-
-        $request = curl_exec($curl);
-        $res = json_decode($request, true);
-        $code = curl_getinfo($curl, CURLINFO_HTTP_CODE);
-
-        if (curl_errno($curl)) {
-            throw new moodle_exception(
-                'errpaystackconnect',
-                'enrol_paystack',
-                '',
-                array('url' => $paystackUrl, 'response' => $res),
-                json_encode($data)
-            );
-        }
-
-        curl_close($curl);
-
-        return $res;
     }
 }
