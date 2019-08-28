@@ -22,12 +22,12 @@
                 "rm" => "2",
                 "first_name" => s($userfirstname),
                 "last_name" => s($userlastname),
-                "email" => s($USER->email),
+                "email" => s($useremail),
             ];
         ?>
         <form method="post" action="<?php echo "$CFG->wwwroot/enrol/paystack/verify.php?id=$course->id"?>">
             <script src="https://js.paystack.co/v1/inline.js" data-key="<?php echo $publickey; ?>"
-                data-ref="<?php echo $reference; ?>" data-email="<?php p($USER->email) ?>"
+                data-ref="<?php echo $reference; ?>" data-email="<?php p($useremail) ?>"
                 data-currency="<?php p($instance->currency) ?>" data-amount="<?php p($cost * 100) ?>"
                 data-metadata='<?php echo json_encode($data) ?>' data-locale="<?php echo current_language(); ?>">
             </script>

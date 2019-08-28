@@ -397,10 +397,12 @@ class enrol_paystack_plugin extends enrol_plugin
                 $userfullname    = fullname($USER);
                 $userfirstname   = $USER->firstname;
                 $userlastname    = $USER->lastname;
+                $useremail       = $USER->email;
                 $instancename    = $this->get_instance_name($instance);
 
                 $publickey = $this->get_publickey();
                 $reference = $this->getHashedToken();
+
                 include($CFG->dirroot.'/enrol/paystack/enrol.html');
             }
         }
