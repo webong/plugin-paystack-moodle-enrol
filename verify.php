@@ -44,7 +44,6 @@ if (empty(required_param('paystack-trxref', PARAM_RAW))) {
 }
 
 $ref = required_param('paystack-trxref', PARAM_RAW);
-
 $fullname = format_string($course->fullname, true, array('context' => $context));
 
 if (is_enrolled($context, NULL, '', true)) { 
@@ -68,5 +67,5 @@ if (is_enrolled($context, NULL, '', true)) {
     $a = new stdClass();
     $a->teacher = get_string('defaultcourseteacher');
     $a->fullname = $fullname;
-    notice(get_string('paymentsorry', '', $a), $destination);
+    redirect($destination, get_string('paymentsorry', '', $a), 5);
 }
