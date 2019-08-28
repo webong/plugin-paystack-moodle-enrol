@@ -46,14 +46,17 @@ if (!enrol_is_enabled('paystack')) {
 }
 
 // Keep out casual intruders.
-if (empty($_POST)) {
+if ((strtoupper($_SERVER['REQUEST_METHOD']) != 'POST' ) || !array_key_exists('HTTP_X_PAYSTACK_SIGNATURE', $_SERVER)) {
     http_response_code(400);
     throw new moodle_exception('invalidrequest', 'core_error');
 }
 
+$input = @file_get_contents("php://input");
+$res = json_decode($input);
+
 $data = new stdClass();
 
-foreach ($_POST as $key => $value) {
+foreach ($res['data']['metadata'] as $key => $value) {
     if ($key !== clean_param($key, PARAM_ALPHANUMEXT)) {
         throw new moodle_exception('invalidrequest', 'core_error', '', null, $key);
     }
@@ -91,17 +94,21 @@ $plugin_instance = $DB->get_record("enrol", array("id" => $data->instanceid, "en
 $plugin = enrol_get_plugin('paystack');
 $paystack = new \enrol_paystack\Paystack('moodle-enrol', $plugin->get_publickey(), $plugin->secretkey());
 
-// Set Course and Paystack Url
+// validate event do all at once to avoid timing attack
+if($paystack->validate_webhook($input))
+  exit;
+
+// Set Course Url
 $courseUrl = "$CFG->wwwroot/course/view.php?id=$course->id";
 
-$res = $paystack->verify_transaction($data->reference, $data);
+// Verify Transaction 
+$res = $paystack->verify_transaction($data->reference);
 
 if ($res['status']) {
     // Send the file, this line will be reached if no error was thrown above.
     $data->tax = $res['data']['amount'] / 100;
     $data->memo = $res['data']['gateway_response'];
     $data->payment_status = $res['data']['status'];
-    $data->reason_code = $code;
 
     // If currency is incorrectly set then someone maybe trying to cheat the system
     if ($data->currency_code != $plugin_instance->currency) {

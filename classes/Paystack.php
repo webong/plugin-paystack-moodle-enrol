@@ -82,10 +82,9 @@ class Paystack {
      * Verify Payment Transaction
      *
      * @param string $reference
-     * @param array $data
      * @return void
      */
-    public function verify_transaction($reference, $data = [])
+    public function verify_transaction($reference)
     {
         $paystackUrl = $this->base_url . "transaction/verify/" . $reference;
 
@@ -111,7 +110,7 @@ class Paystack {
                 'enrol_paystack',
                 '',
                 array('url' => $paystackUrl, 'response' => $res),
-                json_encode($data)
+                ''
             );
         }
 
@@ -142,7 +141,17 @@ class Paystack {
         curl_setopt($ch,CURLOPT_POSTFIELDS, $params_string);
         curl_setopt($ch,CURLOPT_RETURNTRANSFER, true); 
         //execute post
-        $result = curl_exec($ch);
-        //  echo $result;
+        curl_exec($ch);
+    }
+
+    /**
+     * Validate Webhook Signature
+     *
+     * @param $input
+     * @return boolean
+     */
+    public function validate_webhook($input)
+    {
+       return $_SERVER['HTTP_X_PAYSTACK_SIGNATURE'] !== hash_hmac('sha512', $input, $this->secret_key);
     }
 }

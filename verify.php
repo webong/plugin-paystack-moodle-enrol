@@ -20,9 +20,12 @@
 require("../../config.php");
 require_once("$CFG->dirroot/enrol/paystack/lib.php");
 
-$id = required_param('id', PARAM_INT);
+$custom = explode('-', required_param('custom', array(), PARAM_RAW));
+$userid           = (int)$custom[0];
+$courseid         = (int)$custom[1];
+$instanceid       = (int)$custom[2];
 
-if (!$course = $DB->get_record("course", array("id" => $id))) {
+if (!$course = $DB->get_record("course", array("id" => $courseid))) {
     redirect($CFG->wwwroot);
 }
 
@@ -49,13 +52,14 @@ $fullname = format_string($course->fullname, true, array('context' => $context))
 if (is_enrolled($context, NULL, '', true)) { 
     // use real paystack check
     $plugin = enrol_get_plugin('paystack');
+    $plugin_instance = $DB->get_record("enrol", array("id" => $instanceid, "enrol" => "paystack", "status" => 0), "*", MUST_EXIST);
     $paystack = new \enrol_paystack\Paystack('moodle-enrol', $plugin->get_publickey(), $plugin->secretkey());
-    $data = $paystack->verify_transaction($ref);
-    if ($data->payment_status != "success") {
+    $res = $paystack->verify_transaction($ref);
+    if ($res['data']['status'] != "success") {
         $plugin->unenrol_user($plugin_instance, $data->userid);
         message_paystack_error_to_admin(
             "Status not successful. User unenrolled from course",
-            $data
+            $res
         );
         redirect($CFG->wwwroot);
     }
