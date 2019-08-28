@@ -56,7 +56,7 @@ if (is_enrolled($context, NULL, '', true)) {
     $paystack = new \enrol_paystack\Paystack('moodle-enrol', $plugin->get_publickey(), $plugin->secretkey());
     $res = $paystack->verify_transaction($ref);
     if ($res['data']['status'] != "success") {
-        $plugin->unenrol_user($plugin_instance, $data->userid);
+        $plugin->unenrol_user($plugin_instance, $userid);
         message_paystack_error_to_admin(
             "Status not successful. User unenrolled from course",
             $res
