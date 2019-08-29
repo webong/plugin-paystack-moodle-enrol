@@ -1,4 +1,7 @@
-# Paystack Enrolment Plugin #
+<p align="center"><a href="https://paystack.com/"><img src="./pix/banner.png?raw=true" alt="Payment Forms for Paystack"></a></p>
+
+
+# Paystack Enrolment Plugin
 
 Enrolment in Moodle using the Paystack gateway for paid courses
 
