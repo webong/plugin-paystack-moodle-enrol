@@ -28,8 +28,6 @@ class paystack {
     public $secret_key;
 
     public function __construct($plugin, $pk, $sk){
-        //configure plugin name
-        //configure public key
         $this->base_url = "https://api.paystack.co/";
         $this->plugin_name = $plugin;
         $this->public_key = $pk;
