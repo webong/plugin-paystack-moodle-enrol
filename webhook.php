@@ -26,18 +26,15 @@
 // comment out when debugging or better look into error log!
 define('NO_DEBUG_DISPLAY', true);
 
-require('../../config.php');
-require_once("$CFG->dirroot/enrol/paystack/lib.php");
-
-if ($CFG->version < 2018101900) {
-    require_once($CFG->libdir . '/eventslib.php');
-}
-require_once($CFG->libdir . '/enrollib.php');
+// @codingStandardsIgnoreLine This script does not require login.
+require("../../config.php");
+require_once("lib.php");
+require_once($CFG->libdir.'/enrollib.php');
 require_once($CFG->libdir . '/filelib.php');
 
 // Paystack does not like when we return error messages here,
 // the custom handler just logs exceptions and stops.
-// set_exception_handler('enrol_paystack_charge_exception_handler');
+set_exception_handler(\enrol_paystack\util::get_exception_handler());
 
 // Make sure we are enabled in the first place.
 if (!enrol_is_enabled('paystack')) {
@@ -52,11 +49,12 @@ if ((strtoupper($_SERVER['REQUEST_METHOD']) != 'POST' ) || !array_key_exists('HT
 }
 
 $input = @file_get_contents("php://input");
-$res = (array) json_decode($input, true);
+$values = (array) json_decode($input, true);
+$metadata = $values['data']['metadata'];
 
 $data = new stdClass();
 
-foreach ($res['data']['metadata'] as $key => $value) {
+foreach ($metadata as $key => $value) {
     if ($key !== clean_param($key, PARAM_ALPHANUMEXT)) {
         throw new moodle_exception('invalidrequest', 'core_error', '', null, $key);
     }
@@ -80,6 +78,15 @@ $data->payment_gross    = $data->amount;
 $data->payment_currency = $data->currency_code;
 $data->timeupdated      = time();
 
+$plugin = enrol_get_plugin('paystack');
+$paystack = new \enrol_paystack\paystack('moodle-enrol', $plugin->get_publickey(), $plugin->get_secretkey());
+
+// validate event do all at once to avoid timing attack
+if($paystack->validate_webhook($input)){
+    http_response_code(400);
+    throw new moodle_exception('invalidrequest', 'core_error');
+}
+
 // Get the user and course records.
 $user = $DB->get_record("user", array("id" => $data->userid), "*", MUST_EXIST);
 $course = $DB->get_record("course", array("id" => $data->courseid), "*", MUST_EXIST);
@@ -91,17 +98,14 @@ $PAGE->set_context($context);
 $data->item_name = $course->fullname;
 
 $plugin_instance = $DB->get_record("enrol", array("id" => $data->instanceid, "enrol" => "paystack", "status" => 0), "*", MUST_EXIST);
-$plugin = enrol_get_plugin('paystack');
-$paystack = new \enrol_paystack\paystack('moodle-enrol', $plugin->get_publickey(), $plugin->get_secretkey());
 
-// validate event do all at once to avoid timing attack
-if($paystack->validate_webhook($input)){
-    http_response_code(400);
-    throw new moodle_exception('invalidrequest', 'core_error');
+if (is_enrolled($context, $data->userid, '', true)) {
+    \enrol_paystack\util::message_paystack_error_to_admin(
+        "Webhook Stopped: User already enrolled",
+        $data
+    );
+    die;
 }
-
-// Set Course Url
-$courseUrl = "$CFG->wwwroot/course/view.php?id=$course->id";
 
 // Verify Transaction 
 $res = $paystack->verify_transaction($data->reference);
@@ -114,7 +118,7 @@ if ($res['status']) {
 
     // If currency is incorrectly set then someone maybe trying to cheat the system
     if ($data->currency_code != $plugin_instance->currency) {
-        message_paystack_error_to_admin(
+        \enrol_paystack\util::message_paystack_error_to_admin(
             "Currency does not match course settings, received: " . $data->currency_code,
             $data
         );
@@ -133,7 +137,7 @@ if ($res['status']) {
 
     // If cost is greater than payment_gross, then someone maybe trying to cheat the system
     if ($data->payment_gross < $cost) {
-        message_paystack_error_to_admin(
+        \enrol_paystack\util::message_paystack_error_to_admin(
             "Amount paid is not enough ($data->payment_gross < $cost))",
             $data
         );
@@ -230,39 +234,10 @@ if ($res['status']) {
             }
         }
     } else {
-        message_paystack_error_to_admin(
+        \enrol_paystack\util::message_paystack_error_to_admin(
             "Payment status not successful" . $data->memo,
             $data
         );
         die;
     }
-}
-
-// --- HELPER FUNCTIONS --------------------------------------------------------------------------------------!
-/**
- * Send payment error message to the admin.
- *
- * @param string $subject
- * @param stdClass $data
- */
-function message_paystack_error_to_admin($subject, $data)
-{
-    $admin = get_admin();
-    $site = get_site();
-    $message = "$site->fullname:  Transaction failed.\n\n$subject\n\n";
-    foreach ($data as $key => $value) {
-        $message .= s($key) . " => " . s($value) . "\n";
-    }
-    $eventdata = new \core\message\message();
-    $eventdata->modulename        = 'moodle';
-    $eventdata->component         = 'enrol_paystack';
-    $eventdata->name              = 'paystack_enrolment';
-    $eventdata->userfrom          = $admin;
-    $eventdata->userto            = $admin;
-    $eventdata->subject           = "PAYSTACK PAYMENT ERROR: " . $subject;
-    $eventdata->fullmessage       = $message;
-    $eventdata->fullmessageformat = FORMAT_PLAIN;
-    $eventdata->fullmessagehtml   = '';
-    $eventdata->smallmessage      = '';
-    message_send($eventdata);
 }
