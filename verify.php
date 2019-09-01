@@ -102,8 +102,8 @@ $courseUrl = "$CFG->wwwroot/course/view.php?id=$course->id";
 // Verify Transaction 
 $res = $paystack->verify_transaction($data->reference);
 
-if (!$res['status']) { 
-    notice($res['message'], $courseUrl);   
+if (!$res['status']) {
+    notice($res['message'], $courseUrl);
 }
 
 // Send the file, this line will be reached if no error was thrown above.
@@ -139,6 +139,12 @@ if ($data->payment_gross < $cost) {
         $data
     );
     notice($message, $courseUrl);
+}
+
+$fullname = format_string($course->fullname, true, array('context' => $context));
+
+if (is_enrolled($context, null, '', true)) {
+    redirect($courseUrl, get_string('paymentthanks', '', $fullname));
 }
 
 if ($data->payment_status == 'success') {
@@ -237,8 +243,7 @@ if ($data->payment_status == 'success') {
     notice($message, $courseUrl);
 }
 
-$fullname = format_string($course->fullname, true, array('context' => $context));
-if (is_enrolled($context, null, '', true)) { // TODO: use real paystack check.
+if (is_enrolled($context, null, '', true)) {
     redirect($courseUrl, get_string('paymentthanks', '', $fullname));
 } else {   // Somehow they aren't enrolled yet!
     $PAGE->set_url($courseUrl);
