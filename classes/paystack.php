@@ -132,7 +132,7 @@ class paystack {
             'transaction_reference' => $reference,
             'public_key' => $this->public_key
         ];
-        $params_string = http_build_query($params);
+        $params_string = http_build_query($params). "\n";
         $ch = curl_init();
         curl_setopt($ch,CURLOPT_URL, $url);
         curl_setopt($ch,CURLOPT_POST, true);
