@@ -399,6 +399,7 @@ class enrol_paystack_plugin extends enrol_plugin
                 $userlastname    = $USER->lastname;
                 $useremail       = $USER->email;
                 $instancename    = $this->get_instance_name($instance);
+                $customfields    = $this->get_custom_fields();
 
                 $publickey = $this->get_publickey();
                 $reference = $this->getHashedToken();
@@ -407,6 +408,35 @@ class enrol_paystack_plugin extends enrol_plugin
             }
         }
         return $OUTPUT->box(ob_get_clean());
+    }
+
+    /**
+     * Get all custom fields available for plugin.
+     *
+     * @return $customfields.
+     */
+    public function get_custom_fields()
+    {
+        global $USER, $DB;
+
+        $customfieldrecords = $DB->get_records('user_info_field');
+        $configured_customfields = explode(',', get_config('enrol_paystack', 'customfields'));
+
+        $customfields = [];
+
+        foreach ($customfieldrecords as $cus) {
+            foreach($configured_customfields as $con) {
+                if($con == $cus->shortname){
+                    $customfields[] = [
+                        'display_name' => $cus->name ,
+                        'variable_name' => $cus->shortname,
+                        'value' => $USER->profile[$con]
+                    ];
+                }
+            }
+        }
+
+        return $customfields;
     }
 
     /**
