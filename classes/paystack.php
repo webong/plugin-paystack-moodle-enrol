@@ -127,19 +127,26 @@ class paystack {
     {
         //send reference to logger along with plugin name and public key
         $url = "https://plugin-tracker.paystackintegrations.com/log/charge_success";
-        $params = [
+        $data = [
             'plugin_name'  => $this->plugin_name,
             'transaction_reference' => $reference,
             'public_key' => $this->public_key
         ];
-        $params_string = http_build_query($params, '', '&');
-        $ch = curl_init();
-        curl_setopt($ch,CURLOPT_URL, $url);
-        curl_setopt($ch,CURLOPT_POST, true);
-        curl_setopt($ch,CURLOPT_POSTFIELDS, $params_string);
-        curl_setopt($ch,CURLOPT_RETURNTRANSFER, true); 
+
+        $curl = curl_init();   
+        curl_setopt_array($curl, [
+            CURLOPT_URL => $url,
+            CURLOPT_POST => true,
+            CURLOPT_POSTFIELDS => $data
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_HTTPHEADER => [
+                "content-type: application/json",
+                "cache-control: no-cache"
+            ],
+        ]);
+ 
         //execute post
-        curl_exec($ch);
+        curl_exec($curl);
     }
 
     /**
