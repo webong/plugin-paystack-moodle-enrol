@@ -41,7 +41,7 @@ final class util {
      * @param string $subject
      * @param stdClass $data
      */
-    function message_paystack_error_to_admin($subject, $data)
+    public static function message_paystack_error_to_admin($subject, $data)
     {
         $admin = get_admin();
         $site = get_site();
