@@ -22,19 +22,21 @@ namespace enrol_paystack;
 
 defined('MOODLE_INTERNAL') || die();
 
-class paystack {
+class paystack
+{
     public $plugin_name;
     public $public_key;
     public $secret_key;
 
-    public function __construct($plugin, $pk, $sk){
+    public function __construct($plugin, $pk, $sk)
+    {
         $this->base_url = "https://api.paystack.co/";
         $this->plugin_name = $plugin;
         $this->public_key = $pk;
         $this->secret_key = $sk;
     }
 
-     /**
+    /**
      * Verify Payment Transaction
      *
      * @param string $reference
@@ -59,10 +61,13 @@ class paystack {
         ]);
 
         $request = curl_exec($curl);
+
         $res = json_decode($request, true);
 
+        curl_close($curl);
+
         if (curl_errno($curl)) {
-            throw new moodle_exception(
+            throw new \moodle_exception(
                 'errpaystackconnect',
                 'enrol_paystack',
                 '',
@@ -71,12 +76,10 @@ class paystack {
             );
         }
 
-        curl_close($curl);
-
         return $res;
     }
-    
-     /**
+
+    /**
      * Verify Payment Transaction
      *
      * @param string $reference
@@ -87,6 +90,7 @@ class paystack {
         $paystackUrl = $this->base_url . "transaction/verify/" . $reference;
 
         $curl = curl_init();
+        
         curl_setopt_array($curl, [
             CURLOPT_URL => $paystackUrl,
             CURLOPT_RETURNTRANSFER => true,
@@ -99,11 +103,13 @@ class paystack {
         ]);
 
         $request = curl_exec($curl);
-        $res = json_decode($request, true);
         // $code = curl_getinfo($curl, CURLINFO_HTTP_CODE);
+        $res = json_decode($request, true);
+
+        curl_close($curl);
 
         if (curl_errno($curl)) {
-            throw new moodle_exception(
+            throw new \moodle_exception(
                 'errpaystackconnect',
                 'enrol_paystack',
                 '',
@@ -111,8 +117,6 @@ class paystack {
                 ''
             );
         }
-
-        curl_close($curl);
 
         return $res;
     }
@@ -127,26 +131,31 @@ class paystack {
     {
         //send reference to logger along with plugin name and public key
         $url = "https://plugin-tracker.paystackintegrations.com/log/charge_success";
-        $data = [
+
+        $params = [
+            'public_key' => $this->public_key,
             'plugin_name'  => $this->plugin_name,
             'transaction_reference' => $reference,
-            'public_key' => $this->public_key
         ];
 
-        $curl = curl_init();   
+        $curl = curl_init();
+
         curl_setopt_array($curl, [
             CURLOPT_URL => $url,
             CURLOPT_POST => true,
-            CURLOPT_POSTFIELDS => $data
+            CURLOPT_POSTFIELDS => http_build_query($params),
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_HTTPHEADER => [
                 "content-type: application/json",
                 "cache-control: no-cache"
             ],
         ]);
- 
-        //execute post
+
+        // execute post
         curl_exec($curl);
+
+        // close conection
+        curl_close($curl);
     }
 
     /**
@@ -157,6 +166,6 @@ class paystack {
      */
     public function validate_webhook($input)
     {
-       return $_SERVER['HTTP_X_PAYSTACK_SIGNATURE'] !== hash_hmac('sha512', $input, $this->secret_key);
+        return $_SERVER['HTTP_X_PAYSTACK_SIGNATURE'] !== hash_hmac('sha512', $input, $this->secret_key);
     }
 }
