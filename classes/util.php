@@ -72,7 +72,7 @@ final class util {
         return function($ex) {
             $info = get_exception_info($ex);
 
-            $logerrmsg = "enrol_paystack Webhook exception handler: ".$info->message;
+            $logerrmsg = "enrol_paystack exception handler: ".$info->message;
             if (debugging('', DEBUG_NORMAL)) {
                 $logerrmsg .= ' Debug: '.$info->debuginfo."\n".format_backtrace($info->backtrace, true);
             }
@@ -86,21 +86,4 @@ final class util {
         };
     }
 
-    public static function enrol_paystack_charge_exception_handler() {
-        return function($ex) {
-            $info = get_exception_info($ex);
-
-            $logerrmsg = "enrol_paystack charge exception handler: ".$info->message;
-            if (debugging('', DEBUG_NORMAL)) {
-                $logerrmsg .= ' Debug: '.$info->debuginfo."\n".format_backtrace($info->backtrace, true);
-            }
-            error_log($logerrmsg);
-
-            if (http_response_code() == 200) {
-                http_response_code(500);
-            }
-
-            exit(0);
-        };
-    }
 }

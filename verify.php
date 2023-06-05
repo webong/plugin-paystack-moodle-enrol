@@ -40,7 +40,7 @@ require_login();
 // the custom handler just logs exceptions and stops.
 //set_exception_handler('enrol_paystack_charge_exception_handler');
 
-set_exception_handler(array('enrol_paystack\util', 'enrol_paystack_charge_exception_handler'));
+set_exception_handler(array('enrol_paystack\util', 'get_exception_handler'));
 
 
 // Make sure we are enabled in the first place.
