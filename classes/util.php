@@ -72,7 +72,7 @@ final class util {
         return function($ex) {
             $info = get_exception_info($ex);
 
-            $logerrmsg = "enrol_paystack Webhook exception handler: ".$info->message;
+            $logerrmsg = "enrol_paystack exception handler: ".$info->message;
             if (debugging('', DEBUG_NORMAL)) {
                 $logerrmsg .= ' Debug: '.$info->debuginfo."\n".format_backtrace($info->backtrace, true);
             }
@@ -85,4 +85,5 @@ final class util {
             exit(0);
         };
     }
+
 }
