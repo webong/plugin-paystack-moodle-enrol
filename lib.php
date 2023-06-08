@@ -446,7 +446,8 @@ class enrol_paystack_plugin extends enrol_plugin
      */
     public function get_currencies()
     {
-        $codes = array('NGN', 'USD', 'GHS', 'ZAR', 'XOF' , 'KES');
+        $codes = array('NGN', 'USD', 'GHS', 'KES', 'XOF', 'ZAR','EGP');
+
         $currencies = array();
         foreach ($codes as $c) {
             $currencies[$c] = new lang_string($c, 'core_currencies');
