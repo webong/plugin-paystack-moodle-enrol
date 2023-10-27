@@ -187,7 +187,7 @@ if ($data->payment_status == 'success') {
     $shortname = format_string($course->shortname, true, array('context' => $context));
     if (!empty($mailstudents)) {
         $a = new stdClass();
-        $a->coursename = format_string($course->fullname, true, array('context' => $coursecontext));
+        $a->course = format_string($course->fullname, true, array('context' => $coursecontext));
         $a->profileurl = "$CFG->wwwroot/user/view.php?id=$user->id";
         $eventdata = new \core\message\message();
         $eventdata->modulename        = 'moodle';
@@ -203,6 +203,7 @@ if ($data->payment_status == 'success') {
         message_send($eventdata);
     }
     if (!empty($mailteachers) && !empty($teacher)) {
+        $a = new stdClass();
         $a->course = format_string($course->fullname, true, array('context' => $coursecontext));
         $a->user = fullname($user);
         $eventdata = new \core\message\message();
@@ -219,6 +220,7 @@ if ($data->payment_status == 'success') {
         message_send($eventdata);
     }
     if (!empty($mailadmins)) {
+        $a = new stdClass();
         $a->course = format_string($course->fullname, true, array('context' => $coursecontext));
         $a->user = fullname($user);
         $admins = get_admins();
