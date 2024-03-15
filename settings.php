@@ -123,6 +123,19 @@ if ($ADMIN->fulltree) {
         $options
     ));
 
+    // Profile fields to use in the selector
+    $customfieldrecords = $DB->get_records('user_info_field');
+    if ($customfieldrecords) {
+        $customfields = [];
+        foreach ($customfieldrecords as $customfieldrecord) {
+            $customfields[$customfieldrecord->shortname] = $customfieldrecord->name;
+        }
+        asort($customfields);
+        $settings->add(new admin_setting_configmultiselect('enrol_paystack/customfields',
+                get_string('customfields', 'enrol_paystack'), get_string('customfields_desc', 'enrol_paystack'),
+                [], $customfields));
+    }
+
     // --- enrol instance defaults ----------------------------------------------------------------------------
     $settings->add(new admin_setting_heading(
         'enrol_paystack_defaults',

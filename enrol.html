@@ -24,17 +24,28 @@
                 "last_name" => s($userlastname),
                 "email" => s($useremail),
                 "reference" => $reference,
+                "custom_fields" => $customfields
             ];
         ?>
         <form method="post" action="<?php echo "$CFG->wwwroot/enrol/paystack/verify.php"?>">
-            <input type="hidden" name="cmd" value="_xclick" />
+            <?php
+                foreach ($data as $key => $value) {
+                    echo '<input type="hidden" name="' . $key . '" value="' . $value . '" />';
+                }
+            ?>
             <input type="hidden" name="charset" value="utf-8" />
             <input type="hidden" name="custom" value="<?php echo "{$USER->id}-{$course->id}-{$instance->id}" ?>" />
 
-            <script src="https://js.paystack.co/v1/inline.js" data-key="<?php echo $publickey; ?>"
-                data-ref="<?php echo $reference; ?>" data-email="<?php p($useremail) ?>"
-                data-currency="<?php p($instance->currency) ?>" data-amount="<?php p($cost * 100) ?>"
-                data-metadata='<?php echo json_encode($data) ?>' data-locale="<?php echo current_language(); ?>">
+            <script src="https://js.paystack.co/v1/inline.js" 
+                data-key="<?php echo $publickey; ?>"
+                data-ref="<?php echo $reference; ?>" 
+                data-firstname="<?php echo s($userfirstname) ?>"
+                data-lastname="<?php echo s($userlastname) ?>"
+                data-email="<?php p($useremail) ?>"
+                data-currency="<?php p($instance->currency) ?>" 
+                data-amount="<?php p($cost * 100) ?>"
+                data-metadata='<?php echo json_encode($data) ?>' 
+                data-locale="<?php echo current_language(); ?>">
             </script>
         </form>
 

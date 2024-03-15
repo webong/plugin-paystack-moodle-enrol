@@ -399,6 +399,7 @@ class enrol_paystack_plugin extends enrol_plugin
                 $userlastname    = $USER->lastname;
                 $useremail       = $USER->email;
                 $instancename    = $this->get_instance_name($instance);
+                $customfields    = $this->get_custom_fields();
 
                 $publickey = $this->get_publickey();
                 $reference = $this->getHashedToken();
@@ -410,13 +411,43 @@ class enrol_paystack_plugin extends enrol_plugin
     }
 
     /**
+     * Get all custom fields available for plugin.
+     *
+     * @return $customfields.
+     */
+    public function get_custom_fields()
+    {
+        global $USER, $DB;
+
+        $customfieldrecords = $DB->get_records('user_info_field');
+        $configured_customfields = explode(',', get_config('enrol_paystack', 'customfields'));
+
+        $customfields = [];
+
+        foreach ($customfieldrecords as $cus) {
+            foreach($configured_customfields as $con) {
+                if($con == $cus->shortname){
+                    $customfields[] = [
+                        'display_name' => $cus->name ,
+                        'variable_name' => $cus->shortname,
+                        'value' => $USER->profile[$con]
+                    ];
+                }
+            }
+        }
+
+        return $customfields;
+    }
+
+    /**
      * Lists all currencies available for plugin.
      *
      * @return $currencies.
      */
     public function get_currencies()
     {
-        $codes = array('NGN', 'USD', 'GHS');
+        $codes = array('NGN', 'USD', 'GHS', 'KES', 'XOF', 'ZAR','EGP');
+
         $currencies = array();
         foreach ($codes as $c) {
             $currencies[$c] = new lang_string($c, 'core_currencies');
